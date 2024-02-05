@@ -66,7 +66,7 @@ class PiLocationWorker @AssistedInject constructor(@Assisted val context: Contex
         setForeground(foregroundInfo)
         val gson = Gson()
 
-        piLocationManager.locationUpdates(1000).catch {
+        piLocationManager.locationUpdates(5000).catch {
             Timber.e(it)
         }.collect {
             Timber.d("Received the location: $it")

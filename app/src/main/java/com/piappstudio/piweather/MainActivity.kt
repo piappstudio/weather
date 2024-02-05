@@ -26,12 +26,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
-import com.google.android.gms.location.FusedLocationProviderClient
 import com.piappstudio.pinavigation.ErrorManager
 import com.piappstudio.pinavigation.NavManager
 import com.piappstudio.piui.theme.PiWeatherTheme
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 import javax.inject.Inject
+
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -58,6 +59,19 @@ class MainActivity : ComponentActivity() {
                 }
 
             }
+        }
+
+        // Get the intent that started this activity
+        // Get the intent that started this activity
+        val intent = intent
+        val data = intent.data
+        if (data != null) {
+            // Handle the deep link data here
+            val scheme = data.scheme
+            val host = data.host
+            val path = data.path
+            // Process the deep link data as needed
+            Timber.d("Schema: $scheme")
         }
     }
 }
