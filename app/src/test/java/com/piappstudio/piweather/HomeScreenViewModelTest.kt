@@ -22,16 +22,18 @@ import com.piappstudio.pimodel.WeatherResponse
 import com.piappstudio.pimodel.error.PIError
 import com.piappstudio.pinavigation.ErrorManager
 import com.piappstudio.pinetwork.PiWeatherRepository
+import com.piappstudio.piui.location.PiLocationManager
 import com.piappstudio.piweather.ui.home.HomeScreenViewModel
 import io.mockk.coEvery
 import io.mockk.mockk
 import io.mockk.unmockkAll
-import junit.framework.Assert.assertEquals
-import junit.framework.Assert.assertNotNull
+import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertNotNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.test.TestCoroutineDispatcher
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
@@ -42,12 +44,13 @@ class HomeScreenViewModelTest {
     private val prefUtil = mockk<PrefUtil> (relaxed = true)
     private val repository = mockk<PiWeatherRepository>(relaxed = true)
     private val errorManager:ErrorManager = ErrorManager()
-    private val locationManager:PiLocationManager = mockk(relaxed = true)
+    private val locationManager: PiLocationManager = mockk(relaxed = true)
+    private val testDispatcher = StandardTestDispatcher()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Before
     fun setUp() {
-        Dispatchers.setMain(TestCoroutineDispatcher())
+        Dispatchers.setMain(testDispatcher)
     }
 
     @Test
@@ -67,6 +70,7 @@ class HomeScreenViewModelTest {
        )) }
 
         homeScreenViewModel = HomeScreenViewModel(prefUtil = prefUtil, piWeatherRepository =  repository, errorManager = errorManager, locationManager = locationManager)
+        testDispatcher.scheduler.advanceUntilIdle()
         assertNotNull(homeScreenViewModel.homeState.value.weatherResponse)
         assertEquals("Texas", homeScreenViewModel.homeState.value.currentCity)
 
@@ -79,11 +83,14 @@ class HomeScreenViewModelTest {
             WeatherResponse()
         )) }
         homeScreenViewModel.updateWeather("Texas")
+        testDispatcher.scheduler.advanceUntilIdle()
+
         assertNotNull(homeScreenViewModel.homeState.value.weatherResponse)
         coEvery { repository.fetchWeather(any()) } returns flow { emit(Resource.error(
             error = PIError(404)
         )) }
         homeScreenViewModel.updateWeather("Texas")
+        testDispatcher.scheduler.advanceUntilIdle()
         assertNotNull(homeScreenViewModel.homeState.value.piError)
 
     }
@@ -95,11 +102,14 @@ class HomeScreenViewModelTest {
             WeatherResponse()
         )) }
         homeScreenViewModel.fetchWeatherForLocation(20.0, 40.0)
+        testDispatcher.scheduler.advanceUntilIdle()
+
         assertNotNull(homeScreenViewModel.homeState.value.weatherResponse)
         coEvery { repository.fetchWeather(any(), any()) } returns flow { emit(Resource.error(
             error = PIError(404)
         )) }
         homeScreenViewModel.fetchWeatherForLocation(20.0, 40.0)
+        testDispatcher.scheduler.advanceUntilIdle()
         assertNotNull(homeScreenViewModel.homeState.value.piError)
     }
 
@@ -112,8 +122,10 @@ class HomeScreenViewModelTest {
         homeScreenViewModel.cleanPreviousCity()
         assertEquals(null, homeScreenViewModel.homeState.value.currentCity)
     }
+    @OptIn(ExperimentalCoroutinesApi::class)
     @After
     fun tearDown() {
+        Dispatchers.resetMain()
         unmockkAll()
 
     }
